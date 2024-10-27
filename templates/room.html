@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100;0,200;0,300;0,400;1,200;1,300;1,400&display=swap');
+    *{
+        margin: 0;
+        padding: 0;
+        font-family: 'Montserrat', sans-serif;
+    }
+    ::-webkit-scrollbar {
+    width: 8px;
+
+    }
+    ::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 6px;
+    }
+
+    body {
+    margin: 0 ;
+    max-height: 100vh;
+    padding:0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+
+    font-family: 'Montserrat', sans-serif;
+    background: #fff;
+    }
+
+    .container {
+    border: 2px solid #dedede;
+    background-color: #f1f1f1;
+    border-radius: 5px;
+    padding: 15px;
+    margin: 10px 0;
+    width: 500PX;
+
+    }
+    #display {
+        display: flex;
+        flex-direction: column; /* Afficher les messages en colonne */
+        align-items: flex-start; /* Aligner tous les éléments au début (gauche) */
+        border: 2px solid #dedede;
+        width: 800PX;
+        height: 650PX;
+        max-height: 450px;
+        overflow-y: auto;
+        padding: 15px;
+    }
+    .darker {
+
+        border: 2px solid #ccc;
+        background-color: #ddd;
+        border-radius: 10px;
+        margin-bottom: 10px; /* Ajout d'espace entre les messages */
+        padding: 10px; /* Ajout de rembourrage pour le confort */
+
+    }
+
+    .my-message {
+        background-color: #dcf8c6; /* Couleur des messages de l'utilisateur */
+        text-align: right; /* Aligner le texte à droite */
+        margin: 10px 0; /* Ajoute de l'espace vertical entre les messages */
+    }
+
+    .other-message {
+        background-color: #fff; /* Couleur des messages des autres utilisateurs */
+        text-align: left; /* Aligner le texte à gauche */
+        margin: 10px 0; /* Ajoute de l'espace vertical entre les messages */
+    }
+
+    .darker p {
+        line-height: 25px;
+        margin: 5PX 0;
+    }
+    .darker span {
+        color: #999;
+        font-size: 14px;
+        margin-top: 5px;
+    }
+
+    .darker b {
+    text-transform: capitalize;
+    font-style: italic;
+    }
+    input[type=text], select {
+        width: 100%;
+        padding: 12px 20px;
+        margin: 8px 0;
+        display: inline-block;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+
+    input[type=submit] {
+        width: 100%;
+        background-color: #4CAF50;
+        color: white;
+        padding: 14px 20px;
+        margin: 8px 0;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    input[type=submit]:hover {
+        background-color: #45a049;
+    }
+
+    div {
+        border-radius: 5px;
+        background-color: #f2f2f2;
+        padding: 20px;
+    }
+    .link {
+        font-size: 14px;
+        margin-left: 20px;
+        color: #45a049;
+        background-color: #45a049;
+        padding: 8px 10px;
+        color: #fff;
+        border-radius: 6px;
+        text-decoration: none;
+    }
+    .title {
+        margin: 20px 0;
+        color: #000;
+    }
+
+    .reply-button {
+        background-color: #4CAF50; /* Couleur initiale */
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 3px 5px;
+        cursor: pointer;
+    }
+
+    .reply-button:hover {
+        background-color: #45a049; /* Couleur lors du survol */
+    }
+    /* Ajuster la position des boutons de réponse */
+    .my-message .reply-button {
+        float: right; /* Aligner les boutons à droite */
+    }
+
+    .other-message .reply-button {
+        float: left; /* Aligner les boutons à gauche */
+    }
+
+    .active-reply {
+        background-color: #FF5733; /* Couleur du bouton lorsqu'il est actif */
+        color: white;
+    }
+
+    .date-separator {
+        width: 100%;
+        text-align: center;
+        margin: 20px 0;
+        position: relative;
+    }
+
+    .date-separator span {
+        background-color: #f1f1f1; /* Couleur de fond pour la date */
+        padding: 0 10px;
+        font-size: 14px;
+        color: #555;
+        z-index: 1;
+        position: relative;
+    }
+
+    .date-separator hr {
+        border: 0;
+        border-top: 1px solid #ccc;
+        margin: 0;
+        position: absolute;
+        top: 50%;
+        width: 100%;
+        z-index: 0;
+    }
+
+    .highlight {
+        animation: flash 1s ease-in-out 3; /* Clignote 3 fois */
+    }
+
+    @keyframes flash {
+        0%, 100% {
+            background-color: transparent;
+        }
+        50% {
+            background-color: yellow; /* Changez la couleur pour mettre en surbrillance */
+        }
+    }
+
+
+
+    </style>
+    <!-- AJAX -->
+    <script   src="https://code.jquery.com/jquery-3.1.1.min.js"   integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="   crossorigin="anonymous"></script>
+</head>
+<body>
+
+    <!-- Récupération des messages en ajax -->
+    <script>
+         // Fonction pour changer la couleur du bouton et indiquer qu'il est actif
+        function replyToMessageWithStyle(messageId, button) {
+            // Remplir le champ caché "reply_to" avec l'ID du message
+            document.getElementById('reply_to').value = messageId;
+
+            // Vérifier si le bouton est déjà actif
+            if ($(button).hasClass('active-reply')) {
+                // Désactiver le bouton
+                $(button).removeClass('active-reply');
+                $(button).css('background-color', '#4CAF50'); // Remettre à la couleur d'origine
+            } else {
+                // Activer le bouton
+                $('.reply-button').removeClass('active-reply').css('background-color', '#4CAF50'); // Retirer l'activation de tous les boutons
+                $(button).addClass('active-reply');
+                $(button).css('background-color', '#FF5733'); // Changer à la couleur active
+            }
+        }
+        function scrollToMessage(messageId) {
+            //console.log("Tentative de scroll vers le message avec l'ID:", messageId); // Pour voir l'ID dans la console
+            //var element = document.getElementById("message-" + messageId);
+            var element = document.getElementById(messageId);
+            if (element) {
+                // Défile jusqu'au message d'origine
+                //console.log("Message trouvé:", element); // Affiche l'élément trouvé
+                element.scrollIntoView({behavior: "smooth", block: "start"});
+
+                        // Ajouter une classe pour surligner le message pendant quelques secondes
+                element.classList.add('highlight');
+
+                // Retirer la classe après un certain temps (ici 3 secondes)
+                setTimeout(function(){
+                    element.classList.remove("highlight");
+                }, 15000);
+            } else {
+                //console.error("Message non trouvé avec l'ID: " + messageId); // Affiche une erreur si l'élément est introuvable
+                //alert("Message non trouvé.");
+                console.error("Message non trouvé avec l'ID: " + messageId);
+            }
+        }
+
+        function scrollToBottom() {
+            var chatContainer = document.getElementById('chat-container');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function editMessage(messageId, currentMessage) {
+            document.getElementById('message').value = currentMessage; // Mettre le message dans le champ de saisie
+            document.getElementById('reply_to').value = messageId; // Préparer la réponse au message que l'on modifie
+            // Vous pouvez aussi changer le texte du bouton d'envoi pour "Modifier"
+            document.querySelector('input[type=submit]').value = 'Modifier';
+        }
+    function deleteMessage(messageId) {
+        if (confirm("Êtes-vous sûr de vouloir supprimer ce message ?")) {
+            $.ajax({
+                type: 'POST',
+                url: '/delete', // URL de votre endpoint de suppression
+                data: {
+                    message_id: messageId,
+                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+                },
+                success: function(response) {
+                    // Supprimez le message du DOM après confirmation de la suppression
+                    document.getElementById(messageId).remove();
+                },
+                error: function(error) {
+                    alert("Erreur lors de la suppression du message.");
+                }
+            });
+        }
+    }
+
+
+        $(document).ready(function(){
+          var display = $("#display");
+          setInterval(function(){
+              $.ajax({
+                  type: 'GET',
+                  url : "/getMessages/{{room}}/",
+                  success: function(response){
+                      console.log(response);
+                      var isAtBottom = display.scrollTop() + display.innerHeight() >= display[0].scrollHeight;
+                      $("#display").empty();
+
+                      var lastDate = null;  // Pour stocker la dernière date affichée
+                      for (var key in response.messages)
+                      {
+                          var rawDate = new Date(response.messages[key].date);
+                          // Générer un id unique pour chaque message, basé sur son ID dans la base de données
+                          var messageId = "message-" + response.messages[key].id;
+                          var messageClass = response.messages[key].user === username ? 'my-message' : 'other-message';
+                          // Extraire uniquement la date (jour, mois, année)
+                          var formattedDate = rawDate.toLocaleDateString('fr-FR', {day: 'numeric', month: 'long', year: 'numeric'});
+                          var time = rawDate.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
+
+                            // Si c'est un nouveau jour, ajouter une barre de séparation avec la date
+                          if (lastDate !== formattedDate) {
+                            $("#display").append("<div class='date-separator'><hr/><span>" + formattedDate + "</span><hr/></div>");
+                            lastDate = formattedDate;  // Mettre à jour la dernière date affichée
+                          }
+
+
+                          // Si le message est une réponse à un autre message
+                         //var replyToMessage = response.messages[key].reply_to
+                           // ? "<p style='color: gray;'>En réponse à: " + response.messages[key].reply_to.value + "</p>"
+                            //: "";
+
+                         var replyToMessage = response.messages[key].reply_to ?
+                            "<p style='color: gray;'>En réponse à: <a href='#message-" + response.messages[key].reply_to.id +
+                            "' onclick='scrollToMessage(\"message-" + response.messages[key].reply_to.id + "\")'>" +
+                            response.messages[key].reply_to.value + "</a></p>" : "";
+
+
+                        //var temp = "<div id='" + messageId + "' class='darker'><b>" + response.messages[key].user + "</b><p>" + response.messages[key].value + "</p><span>" + formattedDate + " à " + time + "</span>" + replyToMessage +
+                          //  "<p><button class='reply-button' onclick='replyToMessageWithStyle(" + response.messages[key].id + ", this)'>Reply</button></p></div>";
+
+                       /* var temp = "<div id='" + messageId + "' class='darker " + (response.messages[key].user === username ? 'my-message' : 'other-message') + "'>" +
+                            "<b>" + response.messages[key].user + "</b><p>" + response.messages[key].value + "</p>" +
+                            "<span>" + formattedDate + " à " + time + "</span>" + replyToMessage +
+                            "<p><button class='reply-button' onclick='replyToMessageWithStyle(" + response.messages[key].id + ", this)'>Reply</button></p></div>";*/
+
+                       /* var temp = "<div id='" + messageId + "' class='darker " + messageClass + "'>" +
+                            "<b>" + response.messages[key].user + "</b>" +
+                            "<p>" + response.messages[key].value + "</p>" +
+                            "<span>" + formattedDate + " à " + time + "</span>" +
+                            "<p><button class='reply-button' onclick='replyToMessageWithStyle(" + response.messages[key].id + ", this)'>Reply</button></p>" +
+                            "<p><button class='edit-button' onclick='editMessage(" + response.messages[key].id + ", \"" + response.messages[key].value + "\")'>Edit</button></p>" +
+                            "<p><button class='delete-button' onclick='deleteMessage(" + response.messages[key].id + ")'>Delete</button></p>" +
+                            "</div>";*/
+                              var temp = "<div id='" + messageId + "' class='darker " + messageClass + "'>" +
+                               "<b>" + response.messages[key].user + "</b>" +
+                               "<p>" + response.messages[key].value + "</p>" +
+                               "<span>" + formattedDate + " à " + time + "</span>" +
+                               replyToMessage + // Inclure le message auquel on répond juste avant le bouton Reply
+                               "<p><button class='reply-button' onclick='replyToMessageWithStyle(" + response.messages[key].id + ", this)'>Reply</button></p>" +
+                               "</div>";
+
+
+                          $("#display").append(temp);
+                      }
+                      // Scroll to the bottom of the Chat window if the user is already at the bottom
+                      if (isAtBottom) {
+                          $("#display").scrollTop($("#display")[0].scrollHeight);
+                      }
+                  },
+                  error: function(response){
+                      alert('An error occured')
+                  }
+              });
+          },500);
+      });
+
+        // Fonction pour remplir le champ "reply_to" avec l'ID du message auquel on veut répondre
+        function replyToMessage(messageId) {
+            document.getElementById('reply_to').value = messageId;
+        }
+      </script>
+
+    <h2 class="title"> {{room}} - Groupe <a class="link" href="{% url 'home' %}">Change Group</a></h2>
+    <div id="display" >
+        <!-- Les messages de Chat seront ajoutés ici -->
+        <p>Aucun message présent</p>
+    </div>
+    <div class="container">
+        <form id="post-form">
+            {% csrf_token %}
+            <input type="hidden" name="username" id="username" value="{{username}}"/>
+            <input type="hidden" name="room_id" id="room_id" value="{{room_details.id}}"/>
+
+                <!-- Nouveau champ caché pour stocker l'ID du message auquel on répond -->
+            <input type="hidden" name="reply_to" id="reply_to" value=""/>
+            <input type="text" name="message" id="message" width="100px" placeholder="Votre message"/>
+            <input type="submit" value="Send">
+<!--            <input type="text" name="message" id="message" width="100px" />-->
+<!--            <input type="submit" value="Send">-->
+        </form>
+    </div>
+
+    <script type="text/javascript">
+        function scrollToBottom() {
+            var chatContainer = document.getElementById('chat-container');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+
+        // pour soumettre le formulaire en ajax
+         $(document).on('submit','#post-form',function(e){
+        e.preventDefault();
+
+        $.ajax({
+          type:'POST',
+          url:'/send',
+          data:{
+              username:$('#username').val(),
+              room_id:$('#room_id').val(),
+              message:$('#message').val(),
+              reply_to:$('#reply_to').val(),
+            csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val(),
+          },
+        //la  réponse HTTP pour signaler que le message a été envoyé avec succes
+          success: function(data){
+           // alert(data)
+            console.log(data);
+           // Effacer le champ "reply_to" après envoi
+            $('#reply_to').val('');
+            // Appel à la fonction pour scroller en bas
+            scrollToBottom();
+
+          }
+        });
+        document.getElementById('message').value = ''
+
+      });
+    </script>
+</body>
+</html>
